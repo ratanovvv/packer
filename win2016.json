@@ -1,0 +1,51 @@
+{
+  "builders": [
+    {
+      "type": "vsphere-iso",
+
+      "vcenter_server":      "{{ user `vcenter_server` }}",
+      "username":            "{{ user `username` }}",
+      "password":            "{{ user `password` }}",
+      "insecure_connection": "true",
+
+      "vm_name": "win2016-template-0",
+      "host":     "{{ user `host` }}",
+      "datastore": "{{ user `datastore` }}",
+
+      "guest_os_type": "windows9_64Guest",
+
+      "communicator": "winrm",
+      "winrm_username": "{{ user `winrm_username` }}",
+      "winrm_password": "{{ user `winrm_password` }}",
+
+      "CPUs":             1,
+      "RAM":              4096,
+      "RAM_reserve_all": true,
+
+      "disk_controller_type":  "pvscsi",
+      "disk_size":        32768,
+      "disk_thin_provisioned": true,
+
+      "network_card": "vmxnet3",
+      "network": "VM Network",
+
+      "iso_paths": [
+        "[DATA on Host-3] iso/14393.0.161119-1705.RS1_REFRESH_SERVER_EVAL_X64FRE_EN-US.ISO",
+        "[DATA on Host-3] iso/VMware-Tools-core-10.3.5-10430147/vmtools/windows.iso"
+      ],
+
+      "floppy_files": [
+        "{{ template_dir }}/setup/"
+      ],
+      "floppy_img_path": "[DATA on Host-3] iso/VMware-Tools-core-10.3.5-10430147/floppies/pvscsi-Windows8.flp"
+    }
+  ],
+
+  "provisioners": [
+    {
+      "type": "windows-shell",
+      "inline": ["dir c:\\"]
+    }
+  ]
+}
+

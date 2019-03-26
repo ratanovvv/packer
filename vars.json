@@ -1,0 +1,9 @@
+{
+    "vcenter_server": "vcenter.localdomain.local",
+    "username": "",
+    "password": "",
+    "host": "1.2.3.4",
+    "datastore": "",
+    "winrm_username": "",
+    "winrm_password": ""
+}
