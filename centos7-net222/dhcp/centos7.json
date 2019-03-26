@@ -1,0 +1,62 @@
+{
+  "variables": {
+    "ip_address": "10.255.222.209",
+    "netmask": "255.255.255.0",
+    "gateway": "10.255.222.1",
+    "nameserver1": "10.26.4.93",
+    "network_name": "DPortGroup VM Network 10.255.222.0"
+  },
+  "builders": [
+    {
+      "type": "vmware-iso",
+
+      "remote_host": "{{ user `remote_host` }}",
+      "remote_type": "esx5",
+      "remote_username": "{{ user `remote_username` }}",
+      "remote_password": "{{ user `remote_password` }}",
+      "communicator": "ssh",
+      "ssh_username": "{{ user `ssh_username` }}",
+      "ssh_timeout": "10m",
+      "ssh_private_key_file": "id_rsa",
+      "output_directory": "centos7-net222-0",
+
+      "vm_name":  "centos7-net222",
+      "network": "{{ user `network_name` }}",
+      "network_adapter_type": "vmxnet3",
+      "guest_os_type": "centos-64",
+      "remote_datastore": "DevTest",
+      "disk_size": "5120",
+      "iso_url": "https://mirror.yandex.ru/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-1708.iso",
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "bba314624956961a2ea31dd460cd860a77911c1e0a56e4820a12b9c5dad363f5",
+      "tools_upload_flavor": "linux",
+      "headless": false,
+      "vnc_disable_password": "True",
+      "disk_type_id": "thin",
+      "keep_registered": true,
+      "boot_wait": "10s",
+      "floppy_files": [
+        "./centos7ks.cfg"
+      ],
+      "boot_command": [ "<tab> inst.text inst.ks=hd:fd0:/centos7ks.cfg<enter><wait>" ],
+
+      "vmx_data": {
+	"config.version": 8,
+	"virtualHW.version": 8,
+        "ethernet0.present": "TRUE",
+	"ethernet0.startConnected": "TRUE",
+	"ethernet0.dvs.switchId": "50 09 5a 51 ba 26 9d 8d-64 c9 9a fa 56 64 22 f3",
+	"ethernet0.dvs.portgroupId": "dvportgroup-913",
+	"ethernet0.networkName": "{{ user `network_name` }}",
+	"ethernet0.pciSlotNumber": "0",
+        "ethernet0.addressType": "vpx",
+        "ethernet0.uptCompatibility": "TRUE",
+	"ethernet0.wakeOnPcktRcv": "FALSE",
+        "floppy0.present": "TRUE",
+        "numvcpus": "2",
+        "memSize": "2048"
+      }
+
+    }
+  ]
+}

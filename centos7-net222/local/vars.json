@@ -1,0 +1,6 @@
+{
+    "remote_host": "esxi host ip",
+    "remote_user": "esxi host ssh user",
+    "remote_password": "esxi host ssh password",
+    "ssh_username": "ssh user inside template"
+}
