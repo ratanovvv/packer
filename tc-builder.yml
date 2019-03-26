@@ -1,0 +1,79 @@
+---
+- hosts: all
+  tasks:
+  - name: Check if Containers are already installed as Windows Feature
+    win_shell: Get-WindowsOptionalFeature -Online –FeatureName Containers | Where State -CContains "Enabled"
+    register: check_feature_container_installed
+
+  - name: Install Containers natively as Windows Feature (only, if not already installed)
+    win_shell: Enable-WindowsOptionalFeature -Online -FeatureName containers -All -NoRestart
+    when: check_feature_container_installed.stdout == ''
+    ignore_errors: yes
+    register: feature_container_installation
+
+  - name: Check if Hyper-V is already installed as Windows Feature
+    win_shell: Get-WindowsOptionalFeature -Online –FeatureName Microsoft-Hyper-V | Where State -CContains "Enabled"
+    register: check_feature_hyperv_installed
+
+  - name: Install Hyper-V as Windows Feature (only, if not already installed)
+    win_shell: Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -NoRestart
+    when: check_feature_hyperv_installed.stdout == ''
+    ignore_errors: yes
+    register: feature_hyperv_installation
+
+  - name: When Containers and/or Hyper-V had to be installed, we have to reboot the Machine to have them take effect (mostly this step will fail, but it should work nevertheless)
+    win_reboot:
+      reboot_timeout_sec: 60
+      connect_timeout: 60
+    when: feature_container_installation.changed or feature_hyperv_installation.changed
+    ignore_errors: yes
+
+  - name: Checking if Docker Windows Service is already configured (to always ensure a fresh Windows Docker installation)
+    win_service:
+      name: docker
+    register: docker_service_info
+    ignore_errors: yes
+
+  - name: Stop old Docker Windows Service if there
+    win_service:
+      name: docker
+      state: stopped
+    when: docker_service_info.exists == True
+
+  - name: Remove old Docker Windows Service if there
+    win_shell: "C:\\ProgramData\\chocolatey\\lib\\docker\\tools\\docker\\dockerd.exe --unregister-service"
+    when: docker_service_info.exists == True
+    ignore_errors: yes
+
+  - name: Install (or upgrade) via chocolatey
+    win_chocolatey: "name={{ item }} state=latest"
+    with_items: [docker, visualstudio2017buildtools, codecontracts, dotnetfx, jdk8]
+
+  - name: Register Docker as a Windows Service
+    win_shell: "C:\\ProgramData\\chocolatey\\lib\\docker\\tools\\docker\\dockerd.exe --register-service"
+    ignore_errors: yes
+
+  - name: Start Docker as Windows Service
+    win_service:
+      name: docker
+      state: started
+
+  - name: Pull the small Windows Docker Base Image microsoft/nanoserver from hub.docker.com
+    win_shell: docker pull microsoft/nanoserver
+
+  - win_shell: |
+      Set-NetFirewallRule -DisplayGroup "File And Printer Sharing" -Enabled True
+      New-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name EnableLUA -Value 0 -Force
+      secedit /export /cfg c:\secpol.cfg
+      (gc C:\secpol.cfg).replace("PasswordComplexity = 1", "PasswordComplexity = 0") | Out-File C:\secpol.cfg
+      secedit /configure /db c:\windows\security\local.sdb /cfg c:\secpol.cfg /areas SECURITYPOLICY
+      rm -force c:\secpol.cfg -confirm:$false
+
+  - name: Create user bob
+    win_user:
+      name: bob
+      password: "p4ckeR_P?s!w0rd"
+      state: present
+      groups:
+      - "Administrators"
+      - "Remote Desktop Users"

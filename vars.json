@@ -1,0 +1,15 @@
+{
+    "client_id": "",
+    "client_secret": "",
+    "tenant_id": "",
+    "subscription_id": "",
+    "object_id": "",
+    "managed_image_resource_group_name": "",
+    "managed_image_name": "",
+    "capture_container_name": "",
+    "capture_name_prefix": "",
+    "resource_group_name": "",
+    "storage_account": "",
+    "ssh_username": "",
+    "ssh_password": ""
+}
