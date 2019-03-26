@@ -1,0 +1,11 @@
+[Unit]
+Description="TeamCity Agent"
+
+[Service]
+User={{ teamcity_agent_user }}
+ExecStart={{ teamcity_agent_install_dir }}/bin/agent.sh run
+ExecStop={{ teamcity_agent_install_dir }}/bin/agent.sh stop
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

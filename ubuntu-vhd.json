@@ -1,0 +1,45 @@
+{
+  "builders": [{
+    "type": "azure-arm",
+
+    "client_id": "{{ user `client_id` }}",
+    "client_secret": "{{ user `client_secret` }}",
+    "tenant_id": "{{ user `tenant_id` }}",
+    "subscription_id": "{{ user `subscription_id` }}",
+
+    "capture_container_name": "{{ user `capture_container_name` }}",
+    "capture_name_prefix": "{{ user `capture_name_prefix` }}",
+    "resource_group_name": "{{ user `resource_group_name` }}",
+    "storage_account": "{{ user `storage_account` }}",
+
+    "ssh_username": "{{ user `ssh_username` }}",
+    "ssh_password": "{{ user `ssh_password` }}",
+
+    "os_type": "Linux",
+    "image_publisher": "Canonical",
+    "image_offer": "UbuntuServer",
+    "image_sku": "16.04-LTS",
+
+    "azure_tags": {
+        "dept": "Engineering",
+        "task": "Image deployment"
+    },
+
+    "location": "East US",
+    "vm_size": "Standard_D2_v2"
+  }],
+
+  "provisioners": [{
+    "type": "ansible",
+    "playbook_file": "./tc-builder.yml",
+    "ansible_env_vars": [ "ANSIBLE_HOST_KEY_CHECKING=False", "ANSIBLE_SSH_ARGS='-o ForwardAgent=yes -o ControlMaster=auto -o ControlPersist=60s'", "ANSIBLE_NOCOLOR=True" ]
+  },
+  {
+    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "inline": [
+      "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+    ],
+    "inline_shebang": "/bin/sh -x",
+    "type": "shell"
+  }]
+}

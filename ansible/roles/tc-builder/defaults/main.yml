@@ -1,0 +1,40 @@
+---
+docker_state: present
+
+docker_cleanup_packages_Ubuntu:
+  - {package: "docker.io"}
+  - {package: "docker-engine"}
+  - {package: "containerd"}
+
+docker_prerequisite_packages_Ubuntu:
+  - {package: "apt-transport-https"}
+  - {package: "ca-certificates"}
+  - {package: "curl"}
+  - {package: "software-properties-common"}
+  - {package: "unzip"}
+  - {package: "default-jdk"}
+  - {package: "mono-devel"}
+  - {package: "binutils"}
+  - {package: "ca-certificates-mono"}
+  - {package: "fsharp"}
+  - {package: "mono-vbnc"}
+  - {package: "nuget"}
+  - {package: "referenceassemblies-pcl"}
+
+teamcity_agent_password: "ssh_P@ssw0rd"
+teamcity_agent_user: "ssh_username"
+teamcity_agent_group: "ssh_username"
+teamcity_agent_install_dir: "/home/{{teamcity_agent_user}}"
+
+dotnet_dependencies:
+  - libc6
+  - libcurl3
+  - libgcc1
+  - libgssapi-krb5-2
+  - libicu55
+  - liblttng-ust0
+  - libssl1.0.0
+  - libstdc++6
+  - libunwind8
+  - libuuid1
+  - zlib1g

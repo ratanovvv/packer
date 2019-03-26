@@ -1,0 +1,84 @@
+---
+
+- name: Remove previous docker installation
+  apt:
+    name: "{{ item.package }}"
+    state: absent
+  with_items: "{{ docker_cleanup_packages_Ubuntu }}"
+
+- name: Import Docker CE repository gpg key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+    id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+
+- name: Import Mono repository gpg key
+  apt_key:
+    keyserver: hkp://keyserver.ubuntu.com:80
+    id: 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+
+- name: Add Docker CE and Mono repositories
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+  with_items:
+  - "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+  - "deb https://download.mono-project.com/repo/ubuntu stable-xenial main"
+
+- name: Install prerequisite packages
+  apt:
+    name: "{{ item.package }}"
+    state: present
+  with_items: "{{ docker_prerequisite_packages_Ubuntu }}"
+
+- name: Install dotnet dependencies
+  apt: "name={{ item }} state=present"
+  with_items: "{{ dotnet_dependencies }}"
+
+- name: Install Docker CE
+  apt:
+    name: docker-ce
+    state: present
+    update_cache: yes
+
+- systemd: name=docker state=started enabled=true
+
+- user:
+    name: "{{ teamcity_agent_user }}"
+    password: "{{ teamcity_agent_password | password_hash('sha512') }}"
+
+- user:
+    name: "{{ teamcity_agent_user }}"
+    groups: "docker"
+    append: yes
+
+- copy:
+    src: buildAgent.zip
+    dest: "/tmp"
+
+- name: "Create Agent Build dir"
+  file:
+    path: "{{ teamcity_agent_install_dir }}"
+    state: directory
+    owner: "{{ teamcity_agent_user }}"
+    group: "{{ teamcity_agent_user }}"
+    mode: 0755
+  with_items:
+  - "{{ teamcity_agent_install_dir }}"
+  - "/var/lib/waagent"
+
+- name: "Unpack distribution"
+  unarchive:
+    src: "/tmp/buildAgent.zip"
+    dest: "{{ teamcity_agent_install_dir }}"
+    owner: "{{ teamcity_agent_user }}"
+    group: "{{ teamcity_agent_group }}"
+    copy: "no"
+
+- name: "Put TeamCity Agent service file (systemd)"
+  template:
+    src: "teamcity-agent.service.j2"
+    dest: "/etc/systemd/system/teamcity-agent.service"
+
+- systemd: "name=teamcity-agent state=started enabled=true"
+  ignore_errors: true
