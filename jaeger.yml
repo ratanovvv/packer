@@ -1,0 +1,107 @@
+---
+
+- hosts: rhel
+  gather_facts: true
+  become: true
+  vars:
+    # example jaeger configuration
+    # refer to jaeger.help file for all
+    # available options for 1.8.0 version
+    # ingester is experimental and disabled in this deployment
+    # https://github.com/jaegertracing/documentation/blob/master/content/docs/1.8/deployment.md
+    # https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/es/README.md
+    # https://github.com/jaegertracing/jaeger/blob/master/docker-compose/jaeger-docker-compose.yml
+    jaeger_env_vars:
+      collector:
+      - SPAN_STORAGE_TYPE=cassandra,kafka
+      - CASSANDRA_SERVERS=cassandra
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - CASSANDRA_KEYSPACE=jaeger_v1_dc1
+      - KAFKA_BROKERS=kafka:9092
+      query:
+      - SPAN_STORAGE_TYPE=cassandra
+      - CASSANDRA_KEYSPACE=jaeger_v1_dc1
+      - CASSANDRA_SERVERS=cassandra
+      agent:
+      - REPORTER_TYPE=grpc
+      - REPORTER_GRPC_HOST_PORT=localhost:14250
+      ingester:
+      - SPAN_STORAGE_TYPE=cassandra
+      - CASSANDRA_KEYSPACE=jaeger_v1_dc1
+      - CASSANDRA_SERVERS=cassandra
+      - CASSANDRA_ARCHIVE_ENABLED=false
+      - KAFKA_BROKERS=kafka:9092
+    jaeger_user: jaeger
+    jaeger_user_shell: /sbin/nologin
+    jaeger_url: https://github.com/jaegertracing/jaeger/releases/download/v1.8.0/jaeger-1.8.0-linux-amd64.tar.gz
+    jaeger_working_directory: /opt/jaeger
+  tasks:
+  - name: Add the user 'jaeger'
+    user:
+      name: jaeger
+      shell: /sbin/nologin
+      home: "{{ jaeger_working_directory }}"
+
+  - name: Create working directory
+    file:
+      path: "{{ jaeger_working_directory }}"
+      state: directory
+      recurse: yes
+      owner: jaeger
+      mode: "0755"
+
+  - name: Download and unpack jaeger binaries
+    unarchive:
+      src: "{{ jaeger_url }}"
+      dest: /usr/local/bin
+      extra_opts: "--strip-components=1"
+      list_files: true
+      remote_src: yes
+    register: jaeger_binaries
+
+  - name: Place systemd service
+    template:
+      src: jaeger.service
+      dest: /usr/lib/systemd/system/{{ item }}.service
+    with_items: "{{ jaeger_binaries.files }}"
+
+  - name: Create systemd override directories
+    file:
+      path: /etc/systemd/system/{{ item }}.service.d
+      state: directory
+      mode: "0755"
+    with_items: "{{ jaeger_binaries.files }}"
+
+  - name: Jaeger configuration
+    template:
+      src: override.conf
+      dest: /etc/systemd/system/jaeger-{{ item.key }}.service.d/override.conf
+    with_dict: "{{ jaeger_env_vars }}"
+
+  - name: Start services
+    systemd:
+      name: "{{ item }}.service"
+      state: stopped
+      enabled: true
+    when:
+    - item != "jaeger-all-in-one"
+    - item != "example-hotrod"
+    with_items: "{{ jaeger_binaries.files }}"
+
+  - name: Zone trusted
+    firewalld:
+      zone: trusted
+      interface: "{{ item }}"
+      immediate: true
+      state: enabled
+    when: item not in [hostvars[inventory_hostname].ansible_interfaces[0],hostvars[inventory_hostname].ansible_interfaces[-1]]
+    with_items: "{{hostvars[inventory_hostname].ansible_interfaces}}"
+
+  - name: Zone trusted
+    firewalld:
+      zone: trusted
+      interface: "{{ item }}"
+      permanent: true
+      state: enabled
+    when: item not in [hostvars[inventory_hostname].ansible_interfaces[0],hostvars[inventory_hostname].ansible_interfaces[-1]]
+    with_items: "{{hostvars[inventory_hostname].ansible_interfaces}}"

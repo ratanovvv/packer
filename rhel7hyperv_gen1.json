@@ -1,0 +1,33 @@
+{
+  "builders": [
+    {
+      "vm_name": "packer-demo",
+      "type": "hyperv-iso",
+      "boot_command": [
+        "<tab> ip=192.168.10.10::192.168.10.1:24:::none nameserver=8.8.8.8 inst.waitfornet=60 inst.text inst.ks=hd:fd0:/rhel7hyperv.ks.cfg <enter><wait>"
+      ],
+      "generation": 1,
+      "floppy_files": ["rhel7hyperv.ks.cfg"],
+      "enable_secure_boot": false,
+      "boot_wait": "10s",
+      "disk_size": 8192,
+      "ram_size": 1024,
+      "cpu": 2,
+      "iso_url": "file://c:/ws/iso/rhel-server-7.6-x86_64-dvd.iso",
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "60a0be5aeed1f08f2bb7599a578c89ec134b4016cd62a8604b29f15d543a469c",
+      "ssh_username": "root",
+      "ssh_password": "password",
+      "ssh_port": 22,
+      "communicator": "ssh",
+      "ssh_timeout": "25m",
+      "switch_name": "internal_vSwitch",
+      "shutdown_command": "echo 'packer'|sudo -S /sbin/halt -h -p"
+    }
+  ],
+  "provisioners": [{
+    "type": "ansible",
+    "playbook_file": "./jaeger.yml",
+    "inventory_file": "./inventory.yml"
+  }]
+}
