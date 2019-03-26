@@ -1,0 +1,15 @@
+[Unit]
+Description="{{ item }} service"
+After=network.target
+
+[Service]
+Type=simple
+User={{ jaeger_user }}
+ExecStart=/usr/local/bin/{{ item }}
+WorkingDirectory={{ jaeger_working_directory }}
+StandardOutput=journal
+StandardError=journal
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

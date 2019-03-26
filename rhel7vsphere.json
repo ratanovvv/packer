@@ -1,0 +1,38 @@
+{
+  "builders": [
+    {
+      "type": "vsphere-iso",
+
+      "vcenter_server": "{{ user `vcenter_server` }}",
+      "insecure_connection": "true",
+      "username": "{{ user `username` }}",
+      "password": "{{ user `password` }}",
+      "cluster": "{{ user `cluster` }}",
+      "resource_pool": "{{ user `resource_pool` }}",
+      
+
+      "ssh_username": "root",
+      "ssh_password": "password",
+
+      "vm_name":  "rhel7jaeger",
+      "convert_to_template": "true",
+      "CPUs": "2",
+      "RAM": "4096",
+      "network": "{{ user `portgroup_name` }}",
+      "network_card": "vmxnet3",
+      "guest_os_type": "rhel7_64Guest",
+      "datastore": "{{ user `datastore` }}",
+      "disk_size": "8192",
+      "iso_paths": "{{ user `iso_paths` }}",
+      "floppy_files": [
+        "./rhel7ks.cfg"
+      ],
+      "boot_command": "<tab> ip={{ user `tmp_vm_ip` }}::{{ user `tmp_vm_gateway` }}:{{ user `tmp_vm_netmask` }}:::none nameserver={{ user `tmp_vm_nameserver` }} inst.waitfornet=60 inst.text inst.ks=hd:fd0:/rhel7ks.cfg <enter><wait>"
+    }
+  ],
+  "provisioners": [{
+    "type": "ansible",
+    "playbook_file": "./jaeger.yml",
+    "ansible_env_vars": [ "ANSIBLE_HOST_KEY_CHECKING=False", "ANSIBLE_SSH_ARGS='-o ForwardAgent=yes -o ControlMaster=auto -o ControlPersist=60s'", "ANSIBLE_NOCOLOR=True" ]
+  }]
+}

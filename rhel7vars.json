@@ -1,0 +1,14 @@
+{
+	"vcenter_server": "vcenter.server.name",
+	"username": "username@some.string",
+	"password": "password",
+	"cluster": "cluster",
+	"resource_pool": "resource_pool",
+	"portgroup_name": "network-01",
+	"datastore": "datastore-01",
+	"iso_paths": "[datastore-01] folder/file.iso",
+	"tmp_vm_ip": "172.16.0.2",
+	"tmp_vm_gateway": "172.16.0.1",
+	"tmp_vm_netmask": "24",
+	"tmp_vm_nameserver": "8.8.8.8"
+}
